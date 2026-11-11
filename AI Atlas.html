@@ -1,0 +1,248 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>AI Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap">
+<style>
+/* Layout: slim header with language switch, search + filter chips, responsive card grid (1/2/3 cols), then a "who leads where" model list. */
+:root {
+  --bg: #F2F5F9;
+  --surface: #FFFFFF;
+  --ink: #0F1B2D;
+  --muted: #55657A;
+  --line: #D9E0E9;
+  --accent: #0B7A86;
+  --accent-ink: #FFFFFF;
+  --chip: #E6EDF4;
+  --chip-on: #0F1B2D;
+  --chip-on-ink: #FFFFFF;
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-ur: 'Noto Naskh Arabic', 'Noto Sans Arabic', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B121C; --surface: #121C2A; --ink: #E8EEF6; --muted: #93A3B8; --line: #223247;
+    --accent: #3FC1CB; --accent-ink: #06222A; --chip: #1A2738; --chip-on: #E8EEF6; --chip-on-ink: #0B121C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B121C; --surface: #121C2A; --ink: #E8EEF6; --muted: #93A3B8; --line: #223247;
+  --accent: #3FC1CB; --accent-ink: #06222A; --chip: #1A2738; --chip-on: #E8EEF6; --chip-on-ink: #0B121C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+[dir="rtl"] body, body[dir="rtl"] { font-family: var(--font-ur); line-height: 1.9; }
+.wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.wrap[dir="rtl"] { font-family: var(--font-ur); line-height: 1.9; }
+.wrap[dir="rtl"] h1, .wrap[dir="rtl"] h2, .wrap[dir="rtl"] h3 { font-family: var(--font-ur); }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+.brand i { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: inline-block; position: relative; }
+.brand i::after { content: ""; position: absolute; inset: 7px; border: 2px solid var(--accent-ink); border-radius: 50%; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 14px; }
+.hero h1 { font-family: var(--font-display); font-size: clamp(26px, 5.2vw, 40px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+.wrap[dir="rtl"] .hero h1 { line-height: 1.5; letter-spacing: 0; }
+.hero p { margin: 0; color: var(--muted); max-width: 62ch; }
+.tools { display: flex; flex-direction: column; gap: 12px; }
+.search { width: 100%; max-width: 480px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 11px 14px; font: inherit; }
+.search::placeholder { color: var(--muted); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 0; background: var(--chip); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 500; }
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); }
+.count { color: var(--muted); font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.top { display: flex; align-items: center; gap: 12px; }
+.tile { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--chip); color: var(--accent); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.card h3 { margin: 0; font-family: var(--font-display); font-size: 18px; line-height: 1.25; }
+.who { color: var(--muted); font-size: 13px; }
+.desc { margin: 0; flex: 1; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.meta span { background: var(--chip); border-radius: 6px; padding: 2px 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--accent-ink); text-decoration: none; font-weight: 600; border-radius: 10px; padding: 10px 14px; }
+.btn::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+.empty { padding: 28px 0; color: var(--muted); }
+.models { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.models h2 { margin: 0; font-family: var(--font-display); font-size: 20px; }
+.models p.note { margin: 0; color: var(--muted); font-size: 13.5px; }
+.models ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 0 24px; }
+.models li { padding: 10px 0; border-top: 1px solid var(--line); min-width: 0; }
+.models li b { display: block; font-variant-numeric: tabular-nums; }
+.models li span { color: var(--muted); font-size: 14px; }
+footer { color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+</style>
+
+<div class="wrap" id="app" dir="rtl">
+  <header>
+    <div class="brand"><i></i><span>AI Atlas</span></div>
+    <button class="lang" id="lang" type="button" aria-label="Language">English</button>
+  </header>
+
+  <section class="hero">
+    <h1 id="h1"></h1>
+    <p id="sub"></p>
+  </section>
+
+  <section class="tools">
+    <input class="search" id="q" type="search" autocomplete="off">
+    <div class="chips" id="chips" role="group"></div>
+    <div class="count" id="count" aria-live="polite"></div>
+  </section>
+
+  <section class="grid" id="grid"></section>
+
+  <section class="models">
+    <h2 id="mh"></h2>
+    <p class="note" id="mn"></p>
+    <ul id="ml"></ul>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+(function () {
+  var PLAY = "https://play.google.com/store/apps/details?id=";
+  var APPS = [
+    { n: "ChatGPT", co: "OpenAI", pkg: "com.openai.chatgpt", tags: ["gen", "work"], model: "GPT-6 Sol", rating: "4.7", inst: "500M+",
+      en: "The most installed AI app. Chat, voice, images and file reading in one place.",
+      ur: "سب سے زیادہ انسٹال ہونے والی اے آئی ایپ۔ چیٹ، وائس، تصاویر اور فائلیں ایک ہی جگہ۔" },
+    { n: "Google Gemini", co: "Google", pkg: "com.google.android.apps.bard", tags: ["gen", "research"], model: "Gemini 4", rating: "4.5", inst: "1B+",
+      en: "Built into Android and works with Gmail, Maps, YouTube and Docs.",
+      ur: "اینڈرائیڈ میں شامل ہے اور جی میل، میپس، یوٹیوب اور ڈاکس کے ساتھ چلتی ہے۔" },
+    { n: "Claude", co: "Anthropic", pkg: "com.anthropic.claude", tags: ["gen", "work"], model: "Claude Opus 5.5 / Sonnet 5.5", rating: "4.7", inst: "10M+",
+      en: "Strong at careful writing, long documents and coding.",
+      ur: "احتیاط سے لکھنے، لمبی دستاویزات پڑھنے اور کوڈنگ میں مضبوط۔" },
+    { n: "Grok", co: "xAI", pkg: "ai.x.grok", tags: ["gen", "research"], model: "Grok 4.7", rating: "4.8", inst: "",
+      en: "Pulls live information from X. Chat, images and voice.",
+      ur: "ایکس (X) سے تازہ معلومات لیتی ہے۔ چیٹ، تصاویر اور وائس۔" },
+    { n: "Perplexity", co: "Perplexity AI", pkg: "ai.perplexity.app.android", tags: ["research"], model: "Top models + web search", rating: "4.6", inst: "100M+",
+      en: "Answers with sources. The best fit for research and fact checking.",
+      ur: "جواب کے ساتھ ذرائع بھی دکھاتی ہے۔ تحقیق اور حقائق جانچنے کے لیے بہترین۔" },
+    { n: "Microsoft Copilot", co: "Microsoft", pkg: "com.microsoft.copilot", tags: ["gen", "work"], model: "Copilot", rating: "4.7", inst: "50M+",
+      en: "Free assistant with voice, images and Microsoft app support.",
+      ur: "مفت اسسٹنٹ جس میں وائس، تصاویر اور مائیکروسافٹ ایپس کی سپورٹ ہے۔" },
+    { n: "DeepSeek", co: "DeepSeek", pkg: "com.deepseek.chat", tags: ["free", "work"], model: "DeepSeek V4.1", rating: "", inst: "",
+      en: "Free app with strong reasoning and coding. Its open models rank at the top.",
+      ur: "مفت ایپ جس کی ریزننگ اور کوڈنگ مضبوط ہے۔ اس کے اوپن ماڈل سب سے آگے ہیں۔" },
+    { n: "Meta AI", co: "Meta", pkg: "com.facebook.stella", tags: ["gen"], model: "Meta models", rating: "4.6", inst: "50M+",
+      en: "Meta's own assistant for chat, images and video creation.",
+      ur: "میٹا کا اپنا اسسٹنٹ۔ چیٹ، تصاویر اور ویڈیو بنانے کے لیے۔" },
+    { n: "Le Chat (Mistral)", co: "Mistral AI", pkg: "ai.mistral.chat", tags: ["free", "gen"], model: "Mistral models", rating: "4.7", inst: "",
+      en: "Fast European assistant with web search and image generation.",
+      ur: "تیز رفتار یورپی اسسٹنٹ جس میں ویب سرچ اور تصاویر بنانے کی سہولت ہے۔" },
+    { n: "Qwen", co: "Alibaba Cloud", pkg: "ai.qwenlm.chat.android", tags: ["free", "gen"], model: "Qwen models", rating: "4.5", inst: "",
+      en: "Alibaba's assistant, free to use, backed by the Qwen model family.",
+      ur: "علی بابا کا اسسٹنٹ، استعمال مفت، قوون ماڈلز کی بنیاد پر۔" },
+    { n: "Kimi", co: "Moonshot AI", pkg: "com.moonshot.kimichat", tags: ["free", "work"], model: "Kimi K3.1", rating: "4.7", inst: "1M+",
+      en: "Reads long files and screenshots, and can turn them into docs, slides and code.",
+      ur: "لمبی فائلیں اور اسکرین شاٹس پڑھتی ہے اور ان سے دستاویزات، سلائیڈز اور کوڈ بنا سکتی ہے۔" }
+  ];
+  var LEADERS = [
+    { m: "Gemini 4 Carbon", en: "Top raw capability scores in late October 2026.", ur: "اکتوبر 2026 کے آخر میں سب سے زیادہ مجموعی اسکور۔" },
+    { m: "Claude Opus 5.5", en: "Leads the coding and command-line agent boards.", ur: "کوڈنگ اور کمانڈ لائن ایجنٹ ٹیسٹس میں سب سے آگے۔" },
+    { m: "Gemini 4 Argon", en: "Leads the public Arena vote among models you can use.", ur: "استعمال کے قابل ماڈلز میں آرینا ووٹنگ میں سب سے آگے۔" },
+    { m: "GPT-6 family", en: "OpenAI's current line, with GPT-6.1 Sol as the value pick for API work.", ur: "اوپن اے آئی کی موجودہ لائن۔ API کے کام کے لیے GPT-6.1 Sol سستا انتخاب ہے۔" },
+    { m: "Grok 4.7", en: "Low price per token and a 500K context window.", ur: "ٹوکن کی قیمت کم اور 500K تک کانٹیکسٹ۔" },
+    { m: "DeepSeek V4.1 Flash", en: "Top open-weights model on the Artificial Analysis index.", ur: "آرٹیفیشل اینالیسز انڈیکس پر سب سے اوپر اوپن ویٹس ماڈل۔" },
+    { m: "Kimi K3.1 Pro", en: "Open weights with a 1M token context.", ur: "اوپن ویٹس اور 10 لاکھ ٹوکن تک کانٹیکسٹ۔" }
+  ];
+  var T = {
+    ur: {
+      dir: "rtl", sw: "English",
+      h1: "دنیا کی ٹاپ اے آئی ایپس، ایک ہی جگہ",
+      sub: "کسی بھی کارڈ پر ٹیپ کریں اور سیدھا گوگل پلے سٹور پر پہنچ جائیں۔ لنک اصل ڈویلپر کی ایپ کے ہیں۔",
+      ph: "ایپ یا کمپنی تلاش کریں", all: "سب", gen: "جنرل اسسٹنٹ", research: "تحقیق", free: "مفت اور اوپن ماڈل", work: "کام اور کوڈنگ",
+      cnt: function (n) { return n + " ایپس"; }, none: "کوئی ایپ نہیں ملی۔ دوسرا لفظ آزمائیں۔",
+      btn: "پلے سٹور پر کھولیں", lbl: "ماڈل", rate: "ریٹنگ", inst: "ڈاؤن لوڈ",
+      mh: "ماڈل کے لحاظ سے کون آگے ہے", mn: "نومبر 2026 کے لیڈربورڈز کے مطابق۔ رینکنگ ہر چند ہفتوں میں بدلتی ہے۔",
+      foot: "معلومات نومبر 2026 تک۔ ریٹنگ اور ڈاؤن لوڈ کی تعداد اندازاً ہیں اور پلے سٹور پر بدلتی رہتی ہیں۔ آپ کے علاقے میں کوئی ایپ دستیاب نہ ہو تو پلے سٹور خود بتا دے گا۔"
+    },
+    en: {
+      dir: "ltr", sw: "اردو",
+      h1: "The world's top AI apps, in one place",
+      sub: "Tap any card to go straight to Google Play. Every link points to the developer's own app.",
+      ph: "Search apps or companies", all: "All", gen: "General assistants", research: "Research", free: "Free and open models", work: "Work and coding",
+      cnt: function (n) { return n + (n === 1 ? " app" : " apps"); }, none: "No apps found. Try another word.",
+      btn: "Open on Play Store", lbl: "Model", rate: "Rating", inst: "Installs",
+      mh: "Who leads, by model", mn: "Based on leaderboards from November 2026. Rankings shift every few weeks.",
+      foot: "Information as of November 2026. Ratings and install counts are approximate and change on Google Play. If an app isn't offered in your region, Play will tell you."
+    }
+  };
+  var lang = "ur", tag = "all", query = "";
+  try { var s = localStorage.getItem("aiatlas-lang"); if (s === "en" || s === "ur") lang = s; } catch (e) {}
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function renderChips() {
+    var t = T[lang], keys = ["all", "gen", "research", "free", "work"];
+    $("chips").innerHTML = keys.map(function (k) {
+      return '<button type="button" class="chip" data-k="' + k + '" aria-pressed="' + (tag === k) + '">' + t[k] + "</button>";
+    }).join("");
+  }
+  function renderGrid() {
+    var t = T[lang], q = query.trim().toLowerCase();
+    var list = APPS.filter(function (a) {
+      if (tag !== "all" && a.tags.indexOf(tag) < 0) return false;
+      if (!q) return true;
+      return (a.n + " " + a.co + " " + a.model + " " + a.en + " " + a.ur).toLowerCase().indexOf(q) >= 0;
+    });
+    $("count").textContent = t.cnt(list.length);
+    if (!list.length) { $("grid").innerHTML = '<div class="empty">' + t.none + "</div>"; return; }
+    $("grid").innerHTML = list.map(function (a) {
+      var meta = '<span>' + t.lbl + ": " + a.model + "</span>";
+      if (a.rating) meta += "<span>" + t.rate + ": " + a.rating + "</span>";
+      if (a.inst) meta += "<span>" + t.inst + ": " + a.inst + "</span>";
+      return '<article class="card">' +
+        '<div class="top"><div class="tile" aria-hidden="true">' + a.n.charAt(0) + '</div>' +
+        '<div><h3>' + a.n + '</h3><div class="who">' + a.co + "</div></div></div>" +
+        '<p class="desc">' + a[lang] + "</p>" +
+        '<div class="meta">' + meta + "</div>" +
+        '<a class="btn" href="' + PLAY + a.pkg + '" target="_blank" rel="noopener noreferrer" aria-label="' + a.n + " - " + t.btn + '">' + t.btn + "</a>" +
+        "</article>";
+    }).join("");
+  }
+  function renderStatic() {
+    var t = T[lang];
+    $("app").setAttribute("dir", t.dir);
+    document.documentElement.lang = lang;
+    $("lang").textContent = t.sw;
+    $("h1").textContent = t.h1;
+    $("sub").textContent = t.sub;
+    $("q").placeholder = t.ph;
+    $("mh").textContent = t.mh;
+    $("mn").textContent = t.mn;
+    $("ml").innerHTML = LEADERS.map(function (l) { return "<li><b>" + l.m + "</b><span>" + l[lang] + "</span></li>"; }).join("");
+    $("foot").textContent = t.foot;
+  }
+  function renderAll() { renderStatic(); renderChips(); renderGrid(); }
+
+  $("lang").addEventListener("click", function () {
+    lang = lang === "ur" ? "en" : "ur";
+    try { localStorage.setItem("aiatlas-lang", lang); } catch (e) {}
+    renderAll();
+  });
+  $("q").addEventListener("input", function (e) { query = e.target.value; renderGrid(); });
+  $("chips").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-k]");
+    if (!b) return;
+    tag = b.getAttribute("data-k");
+    renderChips(); renderGrid();
+  });
+  renderAll();
+})();
+</script>
+
+</body></html>
